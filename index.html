@@ -13,6 +13,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .active-tab { background-color: #2563eb !important; color: white !important; }
+        input[type="range"] { accent-color: #2563eb; }
     </style>
 </head>
 <body>
@@ -28,9 +29,10 @@
             const [isLoading, setIsLoading] = useState(true);
             const fileInputRef = useRef(null);
 
+            // Load Data Logic
             useEffect(() => {
-                const savedStudy = localStorage.getItem('cima_study_data_v2');
-                const savedReview = localStorage.getItem('cima_review_data_v2');
+                const savedStudy = localStorage.getItem('cima_study_v3');
+                const savedReview = localStorage.getItem('cima_review_v3');
 
                 if (savedStudy && savedReview) {
                     setStudyData(JSON.parse(savedStudy));
@@ -44,51 +46,48 @@
                             setReviewData(data.reviewData);
                             setIsLoading(false);
                         })
-                        .catch(err => console.error("Could not load data.json", err));
+                        .catch(err => console.error("Data fetch error:", err));
                 }
             }, []);
 
+            // Auto-Save and Icon Refresh
             useEffect(() => {
                 if (!isLoading) {
-                    localStorage.setItem('cima_study_data_v2', JSON.stringify(studyData));
-                    localStorage.setItem('cima_review_data_v2', JSON.stringify(reviewData));
+                    localStorage.setItem('cima_study_v3', JSON.stringify(studyData));
+                    localStorage.setItem('cima_review_v3', JSON.stringify(reviewData));
                     if (window.lucide) window.lucide.createIcons();
                 }
             }, [studyData, reviewData, activeTab, isLoading]);
 
-            if (isLoading) return <div className="flex h-screen items-center justify-center font-bold">Initializing Command Center...</div>;
+            if (isLoading) return <div className="flex h-screen items-center justify-center font-bold">Loading CIMA Data...</div>;
 
-            // Handlers
+            // --- Logic Helpers ---
             const handleStudyChange = (id, field, value) => {
                 setStudyData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
             };
             const handleReviewChange = (id, field, value) => {
                 setReviewData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
             };
-            const calculateDaysLeft = (date) => {
-                const diff = new Date(date) - new Date();
+            const calculateDays = (target) => {
+                const diff = new Date(target) - new Date();
                 return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
             };
 
-            const totalHoursGoal = studyData.reduce((acc, i) => acc + (Number(i.target) || 0), 0);
-            const totalHoursActual = studyData.reduce((acc, i) => acc + (Number(i.actual) || 0), 0);
-            const progress = Math.round((totalHoursActual / totalHoursGoal) * 100) || 0;
+            const totalGoal = studyData.reduce((acc, i) => acc + (Number(i.target) || 0), 0);
+            const totalActual = studyData.reduce((acc, i) => acc + (Number(i.actual) || 0), 0);
+            const progress = totalGoal > 0 ? Math.round((totalActual / totalGoal) * 100) : 0;
 
             return (
-                <div className="min-h-screen pb-24">
-                    <header className="bg-[#0f172a] text-white p-8 shadow-xl">
+                <div className="min-h-screen pb-28">
+                    <header className="bg-[#0f172a] text-white p-8">
                         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
                             <div>
-                                <h1 className="text-3xl font-black tracking-tighter">2026 CIMA COMMAND CENTER</h1>
+                                <h1 className="text-3xl font-black tracking-tight">2026 CIMA COMMAND CENTER</h1>
                                 <p className="text-slate-400 text-sm font-medium">Operational Level & Life Planner</p>
                             </div>
-                            <div className="flex bg-[#1e293b] p-1.5 rounded-2xl mt-6 md:mt-0 space-x-1">
+                            <div className="flex bg-[#1e293b] p-1.5 rounded-2xl mt-6 md:mt-0">
                                 {['dashboard', 'tracker', 'review'].map(tab => (
-                                    <button 
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)} 
-                                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'active-tab shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                                    >
+                                    <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'active-tab' : 'text-slate-400 hover:text-white'}`}>
                                         {tab}
                                     </button>
                                 ))}
@@ -100,32 +99,28 @@
                         {activeTab === 'dashboard' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">CIMA Progress</h3>
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase mb-4">Total Progress</h3>
                                     <div className="text-5xl font-black text-slate-900">{progress}%</div>
-                                    <p className="text-slate-500 text-xs mt-2 font-bold">{totalHoursActual} / {totalHoursGoal} Hours</p>
-                                    <div className="w-full bg-slate-100 rounded-full h-3 mt-4 overflow-hidden"><div className="bg-green-500 h-full transition-all duration-1000" style={{width:`${progress}%`}}></div></div>
+                                    <div className="w-full bg-slate-100 rounded-full h-3 mt-4 overflow-hidden">
+                                        <div className="bg-green-500 h-full transition-all duration-1000" style={{width:`${progress}%`}}></div>
+                                    </div>
+                                    <p className="text-slate-500 text-xs mt-3 font-bold">{totalActual} / {totalGoal} Hours</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Vacation</h3>
-                                    <div className="text-5xl font-black text-blue-600">{calculateDaysLeft('2026-01-09')}</div>
-                                    <p className="text-slate-500 text-xs mt-2 font-bold">Days to go</p>
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase mb-4">Vacation Countdown</h3>
+                                    <div className="text-5xl font-black text-blue-600">{calculateDays('2026-01-09')}</div>
+                                    <p className="text-slate-500 text-xs mt-2 font-bold uppercase tracking-widest">Days Remaining</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Exam Window</h3>
-                                    <div className="text-5xl font-black text-red-500">{calculateDaysLeft('2026-05-01')}</div>
-                                    <p className="text-slate-500 text-xs mt-2 font-bold">Days to go</p>
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase mb-4">Exam Window</h3>
+                                    <div className="text-5xl font-black text-red-500">{calculateDays('2026-05-01')}</div>
+                                    <p className="text-slate-500 text-xs mt-2 font-bold uppercase tracking-widest">Days to Push</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Task Status</h3>
-                                    <div className="space-y-3 mt-2">
-                                        <div className="flex justify-between items-center font-black text-xs">
-                                            <span className="flex items-center text-green-600"><div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>DONE</span>
-                                            <span>{studyData.filter(x=>x.status==='Done').length}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center font-black text-xs">
-                                            <span className="flex items-center text-yellow-500"><div className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></div>PENDING</span>
-                                            <span>{studyData.filter(x=>x.status==='Pending').length}</span>
-                                        </div>
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase mb-4">Quick Stats</h3>
+                                    <div className="space-y-2 mt-2 font-black text-xs uppercase">
+                                        <div className="flex justify-between"><span>Completed Weeks</span> <span className="text-green-600">{studyData.filter(x=>x.status==='Done').length}</span></div>
+                                        <div className="flex justify-between"><span>Upcoming Weeks</span> <span className="text-yellow-500">{studyData.filter(x=>x.status==='Pending').length}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -134,18 +129,18 @@
                         {activeTab === 'tracker' && (
                             <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
                                 <table className="w-full text-sm text-left">
-                                    <thead className="bg-[#0f172a] text-white text-[10px] font-black uppercase tracking-tighter">
-                                        <tr><th className="px-6 py-5">Week Starting</th><th className="px-6 py-5">Phase</th><th className="px-6 py-5">Focus Area</th><th className="px-6 py-5 text-center">Target</th><th className="px-6 py-5 text-center">Actual</th><th className="px-6 py-5">Status</th></tr>
+                                    <thead className="bg-[#0f172a] text-white text-[10px] font-black uppercase">
+                                        <tr><th className="px-6 py-5">Week</th><th className="px-6 py-5">Phase</th><th className="px-6 py-5">Focus Area</th><th className="px-6 py-5 text-center">Target</th><th className="px-6 py-5 text-center">Actual</th><th className="px-6 py-5">Status</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 font-bold">
                                         {studyData.map(row => (
-                                            <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-5 text-slate-400">{row.weekStart}</td>
-                                                <td className="px-6 py-5 text-slate-400">{row.phase}</td>
+                                            <tr key={row.id} className="hover:bg-slate-50">
+                                                <td className="px-6 py-5 text-slate-400 whitespace-nowrap">{row.weekStart}</td>
+                                                <td className="px-6 py-5 text-slate-400 text-[11px]">{row.phase}</td>
                                                 <td className="px-6 py-5 text-slate-900">{row.focus}</td>
                                                 <td className="px-6 py-5 text-center text-slate-400">{row.target}h</td>
                                                 <td className="px-6 py-5 text-center">
-                                                    <input type="number" value={row.actual} onChange={(e)=>handleStudyChange(row.id, 'actual', e.target.value)} className="w-16 bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-center focus:border-blue-500 outline-none transition-all" />
+                                                    <input type="number" value={row.actual} onChange={(e)=>handleStudyChange(row.id, 'actual', e.target.value)} className="w-16 bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-center focus:border-blue-500 outline-none" />
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <select value={row.status} onChange={(e)=>handleStudyChange(row.id, 'status', e.target.value)} className={`text-[10px] font-black uppercase p-2.5 rounded-xl border-none ${row.status==='Done'?'bg-green-100 text-green-700':row.status==='Planned Break'?'bg-blue-50 text-blue-600':'bg-slate-100 text-slate-500'}`}>
@@ -160,29 +155,31 @@
                         )}
 
                         {activeTab === 'review' && (
-                            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-                                <table className="w-full text-sm text-left">
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden overflow-x-auto">
+                                <table className="w-full text-sm text-left min-w-[1000px]">
                                     <thead className="bg-[#0f172a] text-white text-[10px] font-black uppercase tracking-widest">
-                                        <tr><th className="px-6 py-5">Date</th><th className="px-6 py-5">Hours</th><th className="px-6 py-5 text-center">Gym</th><th className="px-6 py-5 text-center">Energy</th><th className="px-6 py-5">Well?</th><th className="px-6 py-5">Obstacles</th></tr>
+                                        <tr><th className="px-6 py-5">Date</th><th className="px-6 py-5">Phase</th><th className="px-6 py-5">Hours</th><th className="px-6 py-5 text-center">Gym</th><th className="px-6 py-5 text-center">Energy</th><th className="px-6 py-5">Well?</th><th className="px-6 py-5">Obstacles</th><th className="px-6 py-5">Adjust</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 font-bold">
                                         {reviewData.map(row => (
                                             <tr key={row.id} className="hover:bg-slate-50">
-                                                <td className="px-6 py-5 text-slate-400">{row.date}</td>
+                                                <td className="px-6 py-5 text-slate-400 whitespace-nowrap">{row.date}</td>
+                                                <td className="px-6 py-5 text-slate-400 text-[10px]">{row.phase}</td>
                                                 <td className="px-6 py-5">
-                                                    <select value={row.hoursHit} onChange={(e)=>handleReviewChange(row.id, 'hoursHit', e.target.value)} className="bg-slate-100 text-[10px] font-black uppercase p-2 rounded-lg">
+                                                    <select value={row.hoursHit} onChange={(e)=>handleReviewChange(row.id, 'hoursHit', e.target.value)} className="bg-slate-100 text-[10px] font-black uppercase p-2 rounded-lg outline-none">
                                                         <option>Pending</option><option>Yes</option><option>No</option><option>N/A</option>
                                                     </select>
                                                 </td>
                                                 <td className="px-6 py-5 text-center">
-                                                    <input type="number" value={row.gymStreak} onChange={(e)=>handleReviewChange(row.id, 'gymStreak', e.target.value)} className="w-12 bg-slate-50 border-2 border-slate-100 rounded-lg p-1.5 text-center" />
+                                                    <input type="number" value={row.gymStreak} onChange={(e)=>handleReviewChange(row.id, 'gymStreak', e.target.value)} className="w-12 bg-slate-50 border-2 border-slate-100 rounded-lg p-1 text-center" />
                                                 </td>
                                                 <td className="px-6 py-5 text-center">
                                                     <input type="range" min="1" max="5" value={row.energy} onChange={(e)=>handleReviewChange(row.id, 'energy', e.target.value)} className="w-16 block mx-auto" />
                                                     <span className="text-[10px] font-black text-blue-600">{row.energy}</span>
                                                 </td>
-                                                <td className="px-6 py-5"><input type="text" value={row.good} onChange={(e)=>handleReviewChange(row.id, 'good', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 italic" placeholder="..." /></td>
-                                                <td className="px-6 py-5"><input type="text" value={row.obstacle} onChange={(e)=>handleReviewChange(row.id, 'obstacle', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 italic" placeholder="..." /></td>
+                                                <td className="px-6 py-5"><input type="text" value={row.good} onChange={(e)=>handleReviewChange(row.id, 'good', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 placeholder="..." /></td>
+                                                <td className="px-6 py-5"><input type="text" value={row.obstacle} onChange={(e)=>handleReviewChange(row.id, 'obstacle', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 placeholder="..." /></td>
+                                                <td className="px-6 py-5"><input type="text" value={row.adjust} onChange={(e)=>handleReviewChange(row.id, 'adjust', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 placeholder="..." /></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -196,8 +193,18 @@
                             <button onClick={() => {
                                 const blob = new Blob([JSON.stringify({studyData, reviewData}, null, 2)], {type:'application/json'});
                                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'CIMA_Sync.json'; a.click();
-                            }} className="bg-slate-900 text-white text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-700 transition-all">Export Data</button>
-                            <button onClick={()=>fileInputRef.current.click()} className="bg-white border-2 border-slate-200 text-slate-900 text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-50 transition-all">Import Data</button>
+                            }} className="bg-slate-900 text-white text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-700 transition-all">Export</button>
+                            
+                            <button onClick={() => {
+                                if(confirm("FORCE RELOAD FROM FILE?\n\nThis will wipe any data you typed in the browser and reload the 18+ rows from data.json. Continue?")) {
+                                    localStorage.clear();
+                                    window.location.reload();
+                                }
+                            }} className="bg-red-50 text-red-600 text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl border border-red-100 hover:bg-red-100">
+                                Master Reset
+                            </button>
+
+                            <button onClick={()=>fileInputRef.current.click()} className="bg-white border-2 border-slate-200 text-slate-900 text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-50">Import</button>
                             <input type="file" ref={fileInputRef} onChange={(e)=>{
                                 const reader = new FileReader();
                                 reader.onload = (ev)=>{
@@ -208,7 +215,7 @@
                                 reader.readAsText(e.target.files[0]);
                             }} className="hidden" />
                         </div>
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Auto-Saving Activated</p>
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest hidden md:block">Browser Auto-Save Active</p>
                     </footer>
                 </div>
             );
