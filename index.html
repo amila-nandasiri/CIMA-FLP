@@ -10,10 +10,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .active-tab { background-color: #2563eb !important; color: white !important; }
-        input[type="range"] { accent-color: #2563eb; }
     </style>
 </head>
 <body>
@@ -22,125 +21,77 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const INITIAL_STUDY_DATA = [
-            { id: 1, weekStart: '2026-01-01', phase: 'Phase 1: Warm Up', focus: 'Intro / E1 Org Management', target: 6, actual: 0, status: 'Pending', notes: 'Get momentum before trip' },
-            { id: 2, weekStart: '2026-01-08', phase: 'Vacation', focus: 'NONE - TRAVEL', target: 0, actual: 0, status: 'Planned Break', notes: 'Vacation starts Jan 9' },
-            { id: 3, weekStart: '2026-01-15', phase: 'Vacation', focus: 'NONE - TRAVEL', target: 0, actual: 0, status: 'Planned Break', notes: 'Vacation' },
-            { id: 4, weekStart: '2026-01-22', phase: 'Vacation/Reset', focus: 'NONE - TRAVEL / Return', target: 0, actual: 0, status: 'Planned Break', notes: 'Return Jan 26. Reset.' },
-            { id: 5, weekStart: '2026-01-29', phase: 'Phase 2: The Grind', focus: 'E1 Org Management', target: 10, actual: 0, status: 'Pending', notes: 'Back to routine' },
-            { id: 6, weekStart: '2026-02-05', phase: 'Phase 2: The Grind', focus: 'E1 Org Management', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 7, weekStart: '2026-02-12', phase: 'Phase 2: The Grind', focus: 'P1 Management Accounting', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 8, weekStart: '2026-02-19', phase: 'Phase 2: The Grind', focus: 'P1 Management Accounting', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 9, weekStart: '2026-02-26', phase: 'Phase 2: The Grind', focus: 'P1 Management Accounting', target: 10, actual: 0, status: 'Pending', notes: 'End of Feb Checkpoint' },
-            { id: 10, weekStart: '2026-03-05', phase: 'Phase 2: The Grind', focus: 'F1 Financial Reporting', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 11, weekStart: '2026-03-12', phase: 'Phase 2: The Grind', focus: 'F1 Financial Reporting', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 12, weekStart: '2026-03-19', phase: 'Phase 2: The Grind', focus: 'F1 Financial Reporting', target: 10, actual: 0, status: 'Pending', notes: '' },
-            { id: 13, weekStart: '2026-03-26', phase: 'Phase 2: The Grind', focus: 'Case Study Prep (Intro)', target: 12, actual: 0, status: 'Pending', notes: 'Ramp up hours' },
-            { id: 14, weekStart: '2026-04-02', phase: 'Phase 2: The Grind', focus: 'Case Study Prep', target: 12, actual: 0, status: 'Pending', notes: '' },
-            { id: 15, weekStart: '2026-04-09', phase: 'Phase 2: The Grind', focus: 'Mock Exam 1', target: 12, actual: 0, status: 'Pending', notes: 'Simulate exam conditions' },
-            { id: 16, weekStart: '2026-04-16', phase: 'Phase 2: The Grind', focus: 'Review Weak Areas', target: 12, actual: 0, status: 'Pending', notes: '' },
-            { id: 17, weekStart: '2026-04-23', phase: 'Phase 2: The Grind', focus: 'Mock Exam 2', target: 12, actual: 0, status: 'Pending', notes: '' },
-            { id: 18, weekStart: '2026-04-30', phase: 'Phase 3: Final Push', focus: 'Final Revision', target: 15, actual: 0, status: 'Pending', notes: 'May is here' },
-            { id: 19, weekStart: '2026-05-07', phase: 'Phase 3: Final Push', focus: 'EXAM WINDOW', target: 0, actual: 0, status: 'Pending', notes: 'Good Luck!' },
-        ];
-
-        const INITIAL_REVIEW_DATA = [
-            { id: 1, date: '2026-01-02', phase: 'Warm Up', hoursHit: 'Pending', gymStreak: 7, energy: 3, good: 'Start', obstacle: '', adjust: 'Keep phone away' },
-            { id: 2, date: '2026-01-09', phase: 'Pre-Vacation', hoursHit: 'Pending', gymStreak: 7, energy: 3, good: '', obstacle: 'Packing stress', adjust: 'Enjoy the trip' },
-            { id: 3, date: '2026-01-16', phase: 'Vacation', hoursHit: 'N/A', gymStreak: 0, energy: 5, good: 'Relax', obstacle: '', adjust: 'None' },
-            { id: 4, date: '2026-01-23', phase: 'Vacation', hoursHit: 'N/A', gymStreak: 0, energy: 5, good: 'Relax', obstacle: '', adjust: 'None' },
-            { id: 5, date: '2026-01-30', phase: 'The Return', hoursHit: 'Pending', gymStreak: 5, energy: 3, good: '', obstacle: 'Jet lag?', adjust: 'Back to 5:30' }
-        ];
-
         function App() {
             const [activeTab, setActiveTab] = useState('dashboard');
+            const [studyData, setStudyData] = useState([]);
+            const [reviewData, setReviewData] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
             const fileInputRef = useRef(null);
-            
-            const [studyData, setStudyData] = useState(() => {
-                const saved = localStorage.getItem('cima_study_data_2026');
-                return saved ? JSON.parse(saved) : INITIAL_STUDY_DATA;
-            });
-
-            const [reviewData, setReviewData] = useState(() => {
-                const saved = localStorage.getItem('cima_review_data_2026');
-                return saved ? JSON.parse(saved) : INITIAL_REVIEW_DATA;
-            });
 
             useEffect(() => {
-                localStorage.setItem('cima_study_data_2026', JSON.stringify(studyData));
-                localStorage.setItem('cima_review_data_2026', JSON.stringify(reviewData));
-                if (window.lucide) window.lucide.createIcons();
-            }, [studyData, reviewData, activeTab]);
+                const savedStudy = localStorage.getItem('cima_study_data_v2');
+                const savedReview = localStorage.getItem('cima_review_data_v2');
 
+                if (savedStudy && savedReview) {
+                    setStudyData(JSON.parse(savedStudy));
+                    setReviewData(JSON.parse(savedReview));
+                    setIsLoading(false);
+                } else {
+                    fetch('./data.json')
+                        .then(res => res.json())
+                        .then(data => {
+                            setStudyData(data.studyData);
+                            setReviewData(data.reviewData);
+                            setIsLoading(false);
+                        })
+                        .catch(err => console.error("Could not load data.json", err));
+                }
+            }, []);
+
+            useEffect(() => {
+                if (!isLoading) {
+                    localStorage.setItem('cima_study_data_v2', JSON.stringify(studyData));
+                    localStorage.setItem('cima_review_data_v2', JSON.stringify(reviewData));
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, [studyData, reviewData, activeTab, isLoading]);
+
+            if (isLoading) return <div className="flex h-screen items-center justify-center font-bold">Initializing Command Center...</div>;
+
+            // Handlers
             const handleStudyChange = (id, field, value) => {
                 setStudyData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
             };
-
             const handleReviewChange = (id, field, value) => {
                 setReviewData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
             };
-
-            const calculateDaysLeft = (targetDateStr) => {
-                const target = new Date(targetDateStr);
-                const today = new Date();
-                const diffTime = target - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                return diffDays > 0 ? diffDays : 0;
+            const calculateDaysLeft = (date) => {
+                const diff = new Date(date) - new Date();
+                return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
             };
 
-            // Export All Data
-            const exportData = () => {
-                const combined = { study: studyData, review: reviewData };
-                const blob = new Blob([JSON.stringify(combined, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `CIMA_Command_Backup_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-            };
-
-            const importData = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const json = JSON.parse(e.target.result);
-                        if(json.study) setStudyData(json.study);
-                        if(json.review) setReviewData(json.review);
-                        alert("Data imported successfully!");
-                    } catch (err) { alert("Error parsing file."); }
-                };
-                reader.readAsText(file);
-            };
-
-            const totalHoursGoal = studyData.reduce((acc, item) => acc + (Number(item.target) || 0), 0);
-            const totalHoursCompleted = studyData.reduce((acc, item) => acc + (Number(item.actual) || 0), 0);
-            const progressPercent = totalHoursGoal > 0 ? Math.round((totalHoursCompleted / totalHoursGoal) * 100) : 0;
-            const statusCounts = studyData.reduce((acc, item) => {
-                const s = item.status === 'Planned Break' ? 'Break' : item.status;
-                acc[s] = (acc[s] || 0) + 1;
-                return acc;
-            }, { Done: 0, Pending: 0, Break: 0 });
+            const totalHoursGoal = studyData.reduce((acc, i) => acc + (Number(i.target) || 0), 0);
+            const totalHoursActual = studyData.reduce((acc, i) => acc + (Number(i.actual) || 0), 0);
+            const progress = Math.round((totalHoursActual / totalHoursGoal) * 100) || 0;
 
             return (
-                <div className="min-h-screen pb-20">
-                    <header className="bg-[#0f172a] text-white p-8">
+                <div className="min-h-screen pb-24">
+                    <header className="bg-[#0f172a] text-white p-8 shadow-xl">
                         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight">2026 CIMA COMMAND CENTER</h1>
-                                <p className="text-slate-400 text-sm mt-1 font-medium">Operational Level & Life Planner</p>
+                                <h1 className="text-3xl font-black tracking-tighter">2026 CIMA COMMAND CENTER</h1>
+                                <p className="text-slate-400 text-sm font-medium">Operational Level & Life Planner</p>
                             </div>
-                            <div className="flex bg-[#1e293b] p-1 rounded-xl mt-6 md:mt-0">
-                                <button onClick={() => setActiveTab('dashboard')} className={`flex items-center px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'dashboard' ? 'active-tab shadow-lg' : 'text-slate-400 hover:text-white'}`}>
-                                    <i data-lucide="layout-dashboard" className="w-4 h-4 mr-2"></i> Dashboard
-                                </button>
-                                <button onClick={() => setActiveTab('tracker')} className={`flex items-center px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'tracker' ? 'active-tab shadow-lg' : 'text-slate-400 hover:text-white'}`}>
-                                    <i data-lucide="check-circle" className="w-4 h-4 mr-2"></i> Study Tracker
-                                </button>
-                                <button onClick={() => setActiveTab('review')} className={`flex items-center px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'review' ? 'active-tab shadow-lg' : 'text-slate-400 hover:text-white'}`}>
-                                    <i data-lucide="calendar" className="w-4 h-4 mr-2"></i> Weekly Review
-                                </button>
+                            <div className="flex bg-[#1e293b] p-1.5 rounded-2xl mt-6 md:mt-0 space-x-1">
+                                {['dashboard', 'tracker', 'review'].map(tab => (
+                                    <button 
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)} 
+                                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'active-tab shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </header>
@@ -148,80 +99,59 @@
                     <main className="max-w-7xl mx-auto p-8">
                         {activeTab === 'dashboard' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-slate-500 text-sm font-bold uppercase tracking-wider">CIMA Progress</h3>
-                                        <i data-lucide="activity" className="text-green-500 w-5 h-5"></i>
-                                    </div>
-                                    <div className="text-4xl font-black text-slate-900">{progressPercent}%</div>
-                                    <p className="text-slate-500 text-sm mt-1">{totalHoursCompleted} / {totalHoursGoal} Hours</p>
-                                    <div className="w-full bg-slate-100 rounded-full h-2 mt-4">
-                                        <div className="bg-green-500 h-2 rounded-full" style={{width: `${progressPercent}%`}}></div>
-                                    </div>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">CIMA Progress</h3>
+                                    <div className="text-5xl font-black text-slate-900">{progress}%</div>
+                                    <p className="text-slate-500 text-xs mt-2 font-bold">{totalHoursActual} / {totalHoursGoal} Hours</p>
+                                    <div className="w-full bg-slate-100 rounded-full h-3 mt-4 overflow-hidden"><div className="bg-green-500 h-full transition-all duration-1000" style={{width:`${progress}%`}}></div></div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-slate-500 text-sm font-bold uppercase tracking-wider">Vacation</h3>
-                                        <i data-lucide="plane" className="text-blue-500 w-5 h-5"></i>
-                                    </div>
-                                    <div className="text-4xl font-black text-slate-900">{calculateDaysLeft('2026-01-09')}</div>
-                                    <p className="text-slate-500 text-sm mt-1 font-medium">Days to go</p>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Vacation</h3>
+                                    <div className="text-5xl font-black text-blue-600">{calculateDaysLeft('2026-01-09')}</div>
+                                    <p className="text-slate-500 text-xs mt-2 font-bold">Days to go</p>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-slate-500 text-sm font-bold uppercase tracking-wider">Exam Window</h3>
-                                        <i data-lucide="book-open" className="text-red-500 w-5 h-5"></i>
-                                    </div>
-                                    <div className="text-4xl font-black text-slate-900">{calculateDaysLeft('2026-05-01')}</div>
-                                    <p className="text-slate-500 text-sm mt-1 font-medium">Days to go</p>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Exam Window</h3>
+                                    <div className="text-5xl font-black text-red-500">{calculateDaysLeft('2026-05-01')}</div>
+                                    <p className="text-slate-500 text-xs mt-2 font-bold">Days to go</p>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-slate-500 text-sm font-bold uppercase tracking-wider">Status</h3>
-                                        <i data-lucide="bar-chart-3" className="text-purple-500 w-5 h-5"></i>
-                                    </div>
-                                    <div className="space-y-2 mt-2">
-                                        <div className="flex justify-between text-sm font-bold"><span className="flex items-center"><div className="w-2.5 h-2.5 rounded-full bg-green-500 mr-2"></div>Done</span> <span>{statusCounts.Done}</span></div>
-                                        <div className="flex justify-between text-sm font-bold"><span className="flex items-center"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500 mr-2"></div>Pending</span> <span>{statusCounts.Pending}</span></div>
-                                        <div className="flex justify-between text-sm font-bold"><span className="flex items-center"><div className="w-2.5 h-2.5 rounded-full bg-blue-400 mr-2"></div>Break</span> <span>{statusCounts.Break}</span></div>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                    <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Task Status</h3>
+                                    <div className="space-y-3 mt-2">
+                                        <div className="flex justify-between items-center font-black text-xs">
+                                            <span className="flex items-center text-green-600"><div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>DONE</span>
+                                            <span>{studyData.filter(x=>x.status==='Done').length}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center font-black text-xs">
+                                            <span className="flex items-center text-yellow-500"><div className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></div>PENDING</span>
+                                            <span>{studyData.filter(x=>x.status==='Pending').length}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'tracker' && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                <table className="w-full text-sm text-left border-collapse">
-                                    <thead className="bg-[#0f172a] text-white uppercase text-[11px] font-black tracking-widest">
-                                        <tr>
-                                            <th className="px-6 py-5">Week Starting</th>
-                                            <th className="px-6 py-5">Phase</th>
-                                            <th className="px-6 py-5">Focus Area</th>
-                                            <th className="px-6 py-5 text-center">Target</th>
-                                            <th className="px-6 py-5 text-center">Actual</th>
-                                            <th className="px-6 py-5">Status</th>
-                                            <th className="px-6 py-5">Notes</th>
-                                        </tr>
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-[#0f172a] text-white text-[10px] font-black uppercase tracking-tighter">
+                                        <tr><th className="px-6 py-5">Week Starting</th><th className="px-6 py-5">Phase</th><th className="px-6 py-5">Focus Area</th><th className="px-6 py-5 text-center">Target</th><th className="px-6 py-5 text-center">Actual</th><th className="px-6 py-5">Status</th></tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 font-medium">
+                                    <tbody className="divide-y divide-slate-100 font-bold">
                                         {studyData.map(row => (
                                             <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4 text-slate-500">{row.weekStart}</td>
-                                                <td className="px-6 py-4 text-slate-500">{row.phase}</td>
-                                                <td className="px-6 py-4 text-slate-900 font-bold">{row.focus}</td>
-                                                <td className="px-6 py-4 text-center text-slate-600">{row.target}</td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <input type="number" value={row.actual} onChange={(e) => handleStudyChange(row.id, 'actual', e.target.value)} className="w-16 border-2 border-slate-100 rounded-lg p-1.5 text-center focus:border-blue-500 outline-none" />
+                                                <td className="px-6 py-5 text-slate-400">{row.weekStart}</td>
+                                                <td className="px-6 py-5 text-slate-400">{row.phase}</td>
+                                                <td className="px-6 py-5 text-slate-900">{row.focus}</td>
+                                                <td className="px-6 py-5 text-center text-slate-400">{row.target}h</td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <input type="number" value={row.actual} onChange={(e)=>handleStudyChange(row.id, 'actual', e.target.value)} className="w-16 bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-center focus:border-blue-500 outline-none transition-all" />
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <select value={row.status} onChange={(e) => handleStudyChange(row.id, 'status', e.target.value)} className={`text-xs font-black p-2 rounded-lg border-none outline-none ${row.status === 'Planned Break' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
-                                                        <option>Pending</option>
-                                                        <option>Done</option>
-                                                        <option>Planned Break</option>
-                                                        <option>Missed</option>
+                                                <td className="px-6 py-5">
+                                                    <select value={row.status} onChange={(e)=>handleStudyChange(row.id, 'status', e.target.value)} className={`text-[10px] font-black uppercase p-2.5 rounded-xl border-none ${row.status==='Done'?'bg-green-100 text-green-700':row.status==='Planned Break'?'bg-blue-50 text-blue-600':'bg-slate-100 text-slate-500'}`}>
+                                                        <option>Pending</option><option>Done</option><option>Planned Break</option><option>Missed</option>
                                                     </select>
                                                 </td>
-                                                <td className="px-6 py-4 text-slate-400 truncate max-w-[150px]">{row.notes}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -230,45 +160,29 @@
                         )}
 
                         {activeTab === 'review' && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                <table className="w-full text-sm text-left border-collapse">
-                                    <thead className="bg-[#0f172a] text-white uppercase text-[11px] font-black tracking-widest">
-                                        <tr>
-                                            <th className="px-6 py-5">Date</th>
-                                            <th className="px-6 py-5">Phase</th>
-                                            <th className="px-6 py-5">Hours Hit?</th>
-                                            <th className="px-6 py-5 text-center">Gym (Days)</th>
-                                            <th className="px-6 py-5 text-center">Energy (1-5)</th>
-                                            <th className="px-6 py-5">What Went Well?</th>
-                                            <th className="px-6 py-5">Obstacles</th>
-                                            <th className="px-6 py-5">Adjustments</th>
-                                        </tr>
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-[#0f172a] text-white text-[10px] font-black uppercase tracking-widest">
+                                        <tr><th className="px-6 py-5">Date</th><th className="px-6 py-5">Hours</th><th className="px-6 py-5 text-center">Gym</th><th className="px-6 py-5 text-center">Energy</th><th className="px-6 py-5">Well?</th><th className="px-6 py-5">Obstacles</th></tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 font-medium">
+                                    <tbody className="divide-y divide-slate-100 font-bold">
                                         {reviewData.map(row => (
                                             <tr key={row.id} className="hover:bg-slate-50">
-                                                <td className="px-6 py-4 text-slate-500">{row.date}</td>
-                                                <td className="px-6 py-4 text-slate-500">{row.phase}</td>
-                                                <td className="px-6 py-4">
-                                                    <select value={row.hoursHit} onChange={(e) => handleReviewChange(row.id, 'hoursHit', e.target.value)} className="bg-slate-100 text-slate-600 text-xs font-black p-2 rounded-lg outline-none">
-                                                        <option>Pending</option>
-                                                        <option>Yes</option>
-                                                        <option>No</option>
-                                                        <option>N/A</option>
+                                                <td className="px-6 py-5 text-slate-400">{row.date}</td>
+                                                <td className="px-6 py-5">
+                                                    <select value={row.hoursHit} onChange={(e)=>handleReviewChange(row.id, 'hoursHit', e.target.value)} className="bg-slate-100 text-[10px] font-black uppercase p-2 rounded-lg">
+                                                        <option>Pending</option><option>Yes</option><option>No</option><option>N/A</option>
                                                     </select>
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <input type="number" value={row.gymStreak} onChange={(e) => handleReviewChange(row.id, 'gymStreak', e.target.value)} className="w-14 border-2 border-slate-100 rounded-lg p-1.5 text-center font-bold" />
+                                                <td className="px-6 py-5 text-center">
+                                                    <input type="number" value={row.gymStreak} onChange={(e)=>handleReviewChange(row.id, 'gymStreak', e.target.value)} className="w-12 bg-slate-50 border-2 border-slate-100 rounded-lg p-1.5 text-center" />
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <div className="flex flex-col items-center">
-                                                        <input type="range" min="1" max="5" value={row.energy} onChange={(e) => handleReviewChange(row.id, 'energy', e.target.value)} className="w-20" />
-                                                        <span className="text-xs font-black mt-1">{row.energy}</span>
-                                                    </div>
+                                                <td className="px-6 py-5 text-center">
+                                                    <input type="range" min="1" max="5" value={row.energy} onChange={(e)=>handleReviewChange(row.id, 'energy', e.target.value)} className="w-16 block mx-auto" />
+                                                    <span className="text-[10px] font-black text-blue-600">{row.energy}</span>
                                                 </td>
-                                                <td className="px-6 py-4"><input type="text" placeholder="..." value={row.good} onChange={(e) => handleReviewChange(row.id, 'good', e.target.value)} className="w-full bg-transparent outline-none text-slate-600" /></td>
-                                                <td className="px-6 py-4"><input type="text" placeholder="..." value={row.obstacle} onChange={(e) => handleReviewChange(row.id, 'obstacle', e.target.value)} className="w-full bg-transparent outline-none text-slate-600" /></td>
-                                                <td className="px-6 py-4"><input type="text" placeholder="..." value={row.adjust} onChange={(e) => handleReviewChange(row.id, 'adjust', e.target.value)} className="w-full bg-transparent outline-none text-slate-600" /></td>
+                                                <td className="px-6 py-5"><input type="text" value={row.good} onChange={(e)=>handleReviewChange(row.id, 'good', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 italic" placeholder="..." /></td>
+                                                <td className="px-6 py-5"><input type="text" value={row.obstacle} onChange={(e)=>handleReviewChange(row.id, 'obstacle', e.target.value)} className="w-full bg-transparent outline-none text-slate-600 italic" placeholder="..." /></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -277,17 +191,24 @@
                         )}
                     </main>
 
-                    <footer className="fixed bottom-0 w-full bg-white border-t border-slate-200 p-4 flex justify-between items-center px-10 z-50 shadow-2xl">
-                        <div className="flex space-x-4">
-                            <button onClick={exportData} className="flex items-center text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-700 transition-all shadow-sm">
-                                <i data-lucide="download" className="w-3.5 h-3.5 mr-2"></i> Export Backup
-                            </button>
-                            <button onClick={() => fileInputRef.current.click()} className="flex items-center text-xs bg-white text-slate-900 px-4 py-2 rounded-xl font-bold border-2 border-slate-200 hover:bg-slate-50 transition-all">
-                                <i data-lucide="upload" className="w-3.5 h-3.5 mr-2"></i> Import Backup
-                            </button>
-                            <input type="file" ref={fileInputRef} onChange={importData} className="hidden" accept=".json" />
+                    <footer className="fixed bottom-0 w-full bg-white border-t p-4 flex justify-between items-center px-10 shadow-2xl z-50">
+                        <div className="flex space-x-3">
+                            <button onClick={() => {
+                                const blob = new Blob([JSON.stringify({studyData, reviewData}, null, 2)], {type:'application/json'});
+                                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'CIMA_Sync.json'; a.click();
+                            }} className="bg-slate-900 text-white text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-700 transition-all">Export Data</button>
+                            <button onClick={()=>fileInputRef.current.click()} className="bg-white border-2 border-slate-200 text-slate-900 text-[10px] font-black uppercase px-5 py-2.5 rounded-2xl hover:bg-slate-50 transition-all">Import Data</button>
+                            <input type="file" ref={fileInputRef} onChange={(e)=>{
+                                const reader = new FileReader();
+                                reader.onload = (ev)=>{
+                                    const json = JSON.parse(ev.target.result);
+                                    if(json.studyData) setStudyData(json.studyData);
+                                    if(json.reviewData) setReviewData(json.reviewData);
+                                };
+                                reader.readAsText(e.target.files[0]);
+                            }} className="hidden" />
                         </div>
-                        <span className="text-xs text-slate-400 font-semibold tracking-tight">Changes are saved automatically to this device.</span>
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Auto-Saving Activated</p>
                     </footer>
                 </div>
             );
