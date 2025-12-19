@@ -1,0 +1,30 @@
+{
+  "studyData": [
+    { "id": 1, "weekStart": "2026-01-01", "phase": "Phase 1: Warm Up", "focus": "Intro / E1 Org Management", "target": 6, "actual": 0, "status": "Pending", "notes": "Get momentum before trip" },
+    { "id": 2, "weekStart": "2026-01-08", "phase": "Vacation", "focus": "NONE - TRAVEL", "target": 0, "actual": 0, "status": "Planned Break", "notes": "Vacation starts Jan 9" },
+    { "id": 3, "weekStart": "2026-01-15", "phase": "Vacation", "focus": "NONE - TRAVEL", "target": 0, "actual": 0, "status": "Planned Break", "notes": "Vacation" },
+    { "id": 4, "weekStart": "2026-01-22", "phase": "Vacation/Reset", "focus": "NONE - TRAVEL / Return", "target": 0, "actual": 0, "status": "Planned Break", "notes": "Return Jan 26. Reset." },
+    { "id": 5, "weekStart": "2026-01-29", "phase": "Phase 2: The Grind", "focus": "E1 Org Management", "target": 10, "actual": 0, "status": "Pending", "notes": "Back to routine" },
+    { "id": 6, "weekStart": "2026-02-05", "phase": "Phase 2: The Grind", "focus": "E1 Org Management", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 7, "weekStart": "2026-02-12", "phase": "Phase 2: The Grind", "focus": "P1 Management Accounting", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 8, "weekStart": "2026-02-19", "phase": "Phase 2: The Grind", "focus": "P1 Management Accounting", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 9, "weekStart": "2026-02-26", "phase": "Phase 2: The Grind", "focus": "P1 Management Accounting", "target": 10, "actual": 0, "status": "Pending", "notes": "End of Feb Checkpoint" },
+    { "id": 10, "weekStart": "2026-03-05", "phase": "Phase 2: The Grind", "focus": "F1 Financial Reporting", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 11, "weekStart": "2026-03-12", "phase": "Phase 2: The Grind", "focus": "F1 Financial Reporting", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 12, "weekStart": "2026-03-19", "phase": "Phase 2: The Grind", "focus": "F1 Financial Reporting", "target": 10, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 13, "weekStart": "2026-03-26", "phase": "Phase 2: The Grind", "focus": "Case Study Prep (Intro)", "target": 12, "actual": 0, "status": "Pending", "notes": "Ramp up hours" },
+    { "id": 14, "weekStart": "2026-04-02", "phase": "Phase 2: The Grind", "focus": "Case Study Prep", "target": 12, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 15, "weekStart": "2026-04-09", "phase": "Phase 2: The Grind", "focus": "Mock Exam 1", "target": 12, "actual": 0, "status": "Pending", "notes": "Simulate exam conditions" },
+    { "id": 16, "weekStart": "2026-04-16", "phase": "Phase 2: The Grind", "focus": "Review Weak Areas", "target": 12, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 17, "weekStart": "2026-04-23", "phase": "Phase 2: The Grind", "focus": "Mock Exam 2", "target": 12, "actual": 0, "status": "Pending", "notes": "" },
+    { "id": 18, "weekStart": "2026-04-30", "phase": "Phase 3: Final Push", "focus": "Final Revision", "target": 15, "actual": 0, "status": "Pending", "notes": "May is here" },
+    { "id": 19, "weekStart": "2026-05-07", "phase": "Phase 3: Final Push", "focus": "EXAM WINDOW", "target": 0, "actual": 0, "status": "Pending", "notes": "Good Luck!" }
+  ],
+  "reviewData": [
+    { "id": 1, "date": "2026-01-02", "phase": "Warm Up", "hoursHit": "Pending", "gymStreak": 7, "energy": 3, "good": "Start", "obstacle": "", "adjust": "Keep phone away" },
+    { "id": 2, "date": "2026-01-09", "phase": "Pre-Vacation", "hoursHit": "Pending", "gymStreak": 7, "energy": 3, "good": "", "obstacle": "Packing stress", "adjust": "Enjoy the trip" },
+    { "id": 3, "date": "2026-01-16", "phase": "Vacation", "hoursHit": "N/A", "gymStreak": 0, "energy": 5, "good": "Relax", "obstacle": "", "adjust": "None" },
+    { "id": 4, "date": "2026-01-23", "phase": "Vacation", "hoursHit": "N/A", "gymStreak": 0, "energy": 5, "good": "Relax", "obstacle": "", "adjust": "None" },
+    { "id": 5, "date": "2026-01-30", "phase": "The Return", "hoursHit": "Pending", "gymStreak": 5, "energy": 3, "good": "", "obstacle": "Jet lag?", "adjust": "Back to 5:30" }
+  ]
+}
