@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 CIMA Command Center</title>
+    <title>2026 CIMA COMMAND CENTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -18,7 +18,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         const INITIAL_STUDY_DATA = [
             { id: 1, weekStart: '2026-01-01', phase: 'Phase 1: Warm Up', focus: 'Intro / E1 Org Management', target: 6, actual: 0, status: 'Pending', notes: 'Get momentum before trip' },
@@ -42,25 +42,13 @@
             { id: 19, weekStart: '2026-05-07', phase: 'Phase 3: Final Push', focus: 'EXAM WINDOW', target: 0, actual: 0, status: 'Pending', notes: 'Good Luck!' },
         ];
 
-        const INITIAL_REVIEW_DATA = [
-            { id: 1, date: '2026-01-02', phase: 'Warm Up', hoursHit: 'Pending', gymStreak: 7, energy: 3, good: 'Started strong', obstacle: '', adjust: 'Keep phone away during study' },
-            { id: 2, date: '2026-01-09', phase: 'Pre-Vacation', hoursHit: 'Pending', gymStreak: 7, energy: 3, good: '', obstacle: 'Packing stress', adjust: 'Enjoy the trip!' },
-            { id: 3, date: '2026-01-16', phase: 'Vacation', hoursHit: 'N/A', gymStreak: 0, energy: 5, good: 'Relaxing', obstacle: '', adjust: 'None' },
-            { id: 4, date: '2026-01-23', phase: 'Vacation', hoursHit: 'N/A', gymStreak: 0, energy: 5, good: 'Relaxing', obstacle: '', adjust: 'None' },
-            { id: 5, date: '2026-01-30', phase: 'The Return', hoursHit: 'Pending', gymStreak: 5, energy: 3, good: '', obstacle: 'Jet lag?', adjust: 'Back to 5:30 AM Gym' },
-            { id: 6, date: '2026-02-06', phase: 'The Grind', hoursHit: 'Pending', gymStreak: 7, energy: 3, good: '', obstacle: '', adjust: '' },
-        ];
-
         function App() {
             const [activeTab, setActiveTab] = useState('dashboard');
+            const fileInputRef = useRef(null);
+            
             const [studyData, setStudyData] = useState(() => {
                 const saved = localStorage.getItem('cima_study_data_2026');
                 return saved ? JSON.parse(saved) : INITIAL_STUDY_DATA;
-            });
-
-            const [reviewData, setReviewData] = useState(() => {
-                const saved = localStorage.getItem('cima_review_data_2026');
-                return saved ? JSON.parse(saved) : INITIAL_REVIEW_DATA;
             });
 
             useEffect(() => {
@@ -68,25 +56,7 @@
                 if (window.lucide) window.lucide.createIcons();
             }, [studyData, activeTab]);
 
-            useEffect(() => {
-                localStorage.setItem('cima_review_data_2026', JSON.stringify(reviewData));
-            }, [reviewData]);
-
-            // --- Export Functionality ---
-            const exportData = () => {
-                const fullData = {
-                    studyData,
-                    reviewData,
-                    exportDate: new Date().toISOString()
-                };
-                const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `cima_backup_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-            };
-
+            // --- Handlers ---
             const handleStudyChange = (id, field, value) => {
                 setStudyData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
             };
@@ -99,21 +69,47 @@
                 return diffDays > 0 ? diffDays : 0;
             };
 
+            // --- Export/Import ---
+            const exportData = () => {
+                const blob = new Blob([JSON.stringify(studyData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `CIMA_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        setStudyData(json);
+                        alert("Data imported successfully!");
+                    } catch (err) {
+                        alert("Error parsing file. Make sure it's a valid CIMA backup.");
+                    }
+                };
+                reader.readAsText(file);
+            };
+
             const totalHoursGoal = studyData.reduce((acc, item) => acc + (Number(item.target) || 0), 0);
             const totalHoursCompleted = studyData.reduce((acc, item) => acc + (Number(item.actual) || 0), 0);
             const progressPercent = totalHoursGoal > 0 ? Math.round((totalHoursCompleted / totalHoursGoal) * 100) : 0;
 
             return (
                 <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
-                    <header className="bg-slate-900 text-white p-6 shadow-md">
+                    <header className="bg-slate-900 text-white p-6">
                         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight">2026 CIMA COMMAND CENTER</h1>
-                                <p className="text-slate-400 text-sm mt-1">Operational Level & Life Planner</p>
+                                <h1 className="text-2xl font-bold">2026 CIMA COMMAND CENTER</h1>
+                                <p className="text-slate-400 text-sm">Operational Level Planner</p>
                             </div>
                             <div className="flex space-x-2 mt-4 md:mt-0">
                                 <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Dashboard</button>
-                                <button onClick={() => setActiveTab('tracker')} className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'tracker' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Study Tracker</button>
+                                <button onClick={() => setActiveTab('tracker')} className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'tracker' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Tracker</button>
                             </div>
                         </div>
                     </header>
@@ -122,30 +118,27 @@
                         {activeTab === 'dashboard' ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Total Progress</h3>
+                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Overall Progress</h3>
                                     <div className="text-4xl font-bold text-blue-600">{progressPercent}%</div>
                                     <div className="w-full bg-slate-100 rounded-full h-3 mt-4">
-                                        <div className="bg-blue-600 h-3 rounded-full transition-all duration-500" style={{width: `${progressPercent}%`}}></div>
+                                        <div className="bg-blue-600 h-3 rounded-full" style={{width: `${progressPercent}%`}}></div>
                                     </div>
-                                    <p className="text-slate-400 text-xs mt-4">{totalHoursCompleted} of {totalHoursGoal} hours logged</p>
                                 </div>
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Exam Window</h3>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
+                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Days to Exam Window</h3>
                                     <div className="text-4xl font-bold text-red-500">{calculateDaysLeft('2026-05-01')}</div>
-                                    <p className="text-slate-400 text-xs mt-4">Days until May 1st revisions</p>
                                 </div>
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Next Milestone</h3>
-                                    <div className="text-lg font-bold">Vacation Reset</div>
-                                    <div className="text-2xl font-semibold text-green-500">{calculateDaysLeft('2026-01-09')} Days</div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
+                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">Days to Vacation</h3>
+                                    <div className="text-4xl font-bold text-green-500">{calculateDaysLeft('2026-01-09')}</div>
                                 </div>
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                                 <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-900 text-white text-xs uppercase">
+                                    <thead className="bg-slate-900 text-white">
                                         <tr>
-                                            <th className="px-4 py-3">Week Starting</th>
+                                            <th className="px-4 py-3">Week</th>
                                             <th className="px-4 py-3">Focus Area</th>
                                             <th className="px-4 py-3 text-center">Actual Hours</th>
                                             <th className="px-4 py-3">Status</th>
@@ -154,22 +147,13 @@
                                     <tbody className="divide-y divide-slate-100">
                                         {studyData.map(row => (
                                             <tr key={row.id} className="hover:bg-slate-50">
-                                                <td className="px-4 py-3 font-medium text-slate-500">{row.weekStart}</td>
+                                                <td className="px-4 py-3 text-slate-500">{row.weekStart}</td>
                                                 <td className="px-4 py-3 font-semibold">{row.focus}</td>
                                                 <td className="px-4 py-3 text-center">
-                                                    <input 
-                                                        type="number" 
-                                                        value={row.actual} 
-                                                        onChange={(e) => handleStudyChange(row.id, 'actual', e.target.value)} 
-                                                        className="w-16 border rounded p-1 text-center font-bold"
-                                                    />
+                                                    <input type="number" value={row.actual} onChange={(e) => handleStudyChange(row.id, 'actual', e.target.value)} className="w-16 border rounded p-1 text-center font-bold" />
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <select 
-                                                        value={row.status} 
-                                                        onChange={(e) => handleStudyChange(row.id, 'status', e.target.value)}
-                                                        className="text-xs font-bold p-1 bg-slate-100 rounded border-none"
-                                                    >
+                                                    <select value={row.status} onChange={(e) => handleStudyChange(row.id, 'status', e.target.value)} className="text-xs font-bold p-1 bg-slate-100 rounded">
                                                         <option>Pending</option>
                                                         <option>Done</option>
                                                         <option>Planned Break</option>
@@ -184,15 +168,13 @@
                         )}
                     </main>
 
-                    <footer className="fixed bottom-0 w-full bg-white border-t border-slate-200 p-3 flex justify-between items-center px-8">
-                        <span className="text-xs text-slate-400 font-medium">Auto-saving to browser storage...</span>
-                        <button 
-                            onClick={exportData}
-                            className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-slate-700 flex items-center transition-all"
-                        >
-                            <svg className="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Download Backup (.json)
-                        </button>
+                    <footer className="fixed bottom-0 w-full bg-white border-t p-3 flex justify-between items-center px-8">
+                        <div className="flex space-x-4">
+                            <button onClick={exportData} className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md border border-blue-200 hover:bg-blue-100">Export Backup</button>
+                            <button onClick={() => fileInputRef.current.click()} className="text-xs bg-slate-50 text-slate-700 px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-100">Import Backup</button>
+                            <input type="file" ref={fileInputRef} onChange={importData} className="hidden" accept=".json" />
+                        </div>
+                        <span className="text-[10px] text-slate-400">Data stored locally on this device. Use Export to sync.</span>
                     </footer>
                 </div>
             );
